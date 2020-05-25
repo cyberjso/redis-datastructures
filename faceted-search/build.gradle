@@ -1,6 +1,7 @@
-
 plugins {
-    id 'java-library'
+	id 'org.springframework.boot' version '2.3.0.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+	id 'java'
 }
 
 repositories {
@@ -8,5 +9,9 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	
+	compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.0'
 	compile group: 'io.lettuce', name: 'lettuce-core', version: '5.3.0.RELEASE'	
 }

@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.lettuce.core.KeyValue;
@@ -22,12 +22,14 @@ public class SearchAPI {
 	@Autowired private RedisCommands<String, String> redisCommandExecutor;
 	@Autowired private ObjectMapper mapper;
 	
-	@GetMapping("/search")
+	@RequestMapping(value  = "/search", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Product> search(String query) {
-		List<String> productKeys = redisCommandExecutor.zrangebyscore("products:search:relvanceIndex", Range.create(0D, 10D));
+	public List<Product> search(@RequestParam(name  = "query", defaultValue = "") String query, 
+							    @RequestParam(name  = "from", defaultValue = "0") String from, 
+							    @RequestParam(name  = "offset", defaultValue = "10") String offset) {
+		List<String> productKeys = redisCommandExecutor.zrangebyscore("products:search:relvanceIndex", Range.create(new Double(from), new Double(offset)));
 		
-		List<KeyValue<String, String>> result =  redisCommandExecutor.mget(productKeys.stream().toArray(String[]::new));
+		List<KeyValue<String, String>> result =  redisCommandExecutor.mget(productKeys.stream().map(key -> "products:" +  key).toArray(String[]::new));
 		
 		return result.stream().map(keyValue -> parse(keyValue.getValue(), Product.class).orElse(new Product())).collect(Collectors.toList());
 	}
@@ -39,7 +41,5 @@ public class SearchAPI {
 			return Optional.empty();
 		}
 	}
-	
-	
 	
 }

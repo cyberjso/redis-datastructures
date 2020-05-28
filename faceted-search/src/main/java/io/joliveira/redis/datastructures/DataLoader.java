@@ -23,8 +23,8 @@ public class DataLoader implements  ApplicationListener<ContextRefreshedEvent> {
 	@Autowired private ObjectMapper mapper;
 	
 	private Logger logger = LoggerFactory.getLogger(DataLoader.class);
-	private List<String> categories =  Arrays.asList("HEALTH CARE", "ELETRONICS", "BOOKS");
-	private List<String> statuses =  Arrays.asList("NOT AVAILABLE", "AVAILABLE", "RESERVED");
+	public static List<String> categories =  Arrays.asList("health_care", "eletronics", "books");
+	public static List<String> statuses =  Arrays.asList("not_available", "available", "reserved");
 	
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -41,11 +41,13 @@ public class DataLoader implements  ApplicationListener<ContextRefreshedEvent> {
 			product.setCategory(statuses.get(0));
 		
 			try {
-				redisCommandExecutor.zadd("products:search:relvanceIndex",  new Double(i), product.getId());
-				redisCommandExecutor.set("products:" + product.getId(), mapper.writeValueAsString(product));
+				Double productRelevance = new Double(i);
 				
-				redisCommandExecutor.sadd("products:search:facets:" + product.getStatus() , product.getId());
-				redisCommandExecutor.sadd("products:search:facets:" + product.getCategory() , product.getId());
+				redisCommandExecutor.zadd("products:search:relvanceIndex",  productRelevance, product.getId());
+				redisCommandExecutor.zadd("products:search:facets:" + product.getStatus(), productRelevance, product.getId());
+				redisCommandExecutor.zadd("products:search:facets:" + product.getCategory(), productRelevance, product.getId());
+				redisCommandExecutor.set("products:" + product.getId(), mapper.writeValueAsString(product));
+
 			} catch (Exception e) {
 				throw new RuntimeException("Error when inserting data into redis", e);
 			}
